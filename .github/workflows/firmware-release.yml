@@ -1,0 +1,107 @@
+name: Build firmware releases
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Raspberry Pi Pico 2
+            board: pico2
+            artifact: pico2
+          - name: Pimoroni Pico Plus 2
+            board: pimoroni_pico_plus2_rp2350
+            artifact: pimoroni-pico-plus-2
+          - name: Pimoroni PGA2350
+            board: pimoroni_pga2350
+            artifact: pimoroni-pga2350
+
+    steps:
+      - name: Check out AliceLamp
+        uses: actions/checkout@v4
+
+      - name: Check out Pico SDK
+        uses: actions/checkout@v4
+        with:
+          repository: raspberrypi/pico-sdk
+          ref: 2.3.1
+          path: pico-sdk
+          submodules: recursive
+
+      - name: Install Arm toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes cmake gcc-arm-none-eabi libnewlib-arm-none-eabi ninja-build
+
+      - name: Read project version
+        id: version
+        shell: bash
+        run: |
+          version="$(tr -d '\r\n' < VERSION)"
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+$ ]]; then
+            echo "VERSION must contain a MAJOR.MINOR version" >&2
+            exit 1
+          fi
+          echo "value=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Validate release tag
+        if: github.event_name == 'release'
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          expected_tag="v${{ steps.version.outputs.value }}"
+          if [[ "$RELEASE_TAG" != "$expected_tag" ]]; then
+            echo "Release tag $RELEASE_TAG does not match VERSION ($expected_tag)" >&2
+            exit 1
+          fi
+
+      - name: Configure
+        run: >-
+          cmake -S . -B build/${{ matrix.artifact }} -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          -DPICO_SDK_PATH=${{ github.workspace }}/pico-sdk
+          -DPICO_BOARD=${{ matrix.board }}
+
+      - name: Build
+        run: cmake --build build/${{ matrix.artifact }}
+
+      - name: Prepare UF2
+        run: |
+          mkdir -p dist
+          cp build/${{ matrix.artifact }}/AliceLamp.uf2 \
+            dist/AliceLamp-${{ steps.version.outputs.value }}-${{ matrix.artifact }}.uf2
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AliceLamp-${{ steps.version.outputs.value }}-${{ matrix.artifact }}
+          path: dist/AliceLamp-${{ steps.version.outputs.value }}-${{ matrix.artifact }}.uf2
+          if-no-files-found: error
+
+  publish:
+    name: Attach UF2 files to release
+    if: github.event_name == 'release'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download firmware artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: AliceLamp-*
+          path: dist
+          merge-multiple: true
+
+      - name: Upload release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" dist/*.uf2 --clobber
