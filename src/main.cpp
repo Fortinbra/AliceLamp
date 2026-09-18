@@ -19,6 +19,7 @@ int main() {
         alice_lamp::config::touch_active_high,
         alice_lamp::config::debounce_ms);
     alice_lamp::RingAnimation animation(alice_lamp::config::led_count);
+    strip.clear(alice_lamp::config::led_clear_count);
 
     bool lights_on = true;
     std::uint32_t last_frame_ms = 0;
@@ -27,6 +28,9 @@ int main() {
         const std::uint32_t now_ms = to_ms_since_boot(get_absolute_time());
         if (power_button.pressed(now_ms)) {
             lights_on = !lights_on;
+            if (!lights_on) {
+                strip.clear(alice_lamp::config::led_clear_count);
+            }
         }
         if (cycle_button.pressed(now_ms)) {
             animation.next_animation();
@@ -43,8 +47,6 @@ int main() {
                                              alice_lamp::config::brightness / 255.0F;
                     strip.write(sample.color, brightness);
                 }
-            } else {
-                strip.clear(alice_lamp::config::led_count);
             }
         }
 

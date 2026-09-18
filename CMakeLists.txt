@@ -46,13 +46,15 @@ add_executable(AliceLamp
     src/ring_animation.cpp
     src/ws2812_strip.cpp)
 
-set(ALICE_LED_COUNT 60 CACHE STRING "Number of WS2812B LEDs in the strip")
+set(ALICE_LED_COUNT 80 CACHE STRING "Number of WS2812B LEDs in the strip")
+set(ALICE_LED_CLEAR_COUNT 300 CACHE STRING "Maximum LEDs to clear after configuration changes")
 set(ALICE_LED_PIN 2 CACHE STRING "GPIO connected to the WS2812B data input")
 set(ALICE_POWER_TOUCH_PIN 3 CACHE STRING "GPIO connected to the power touch sensor")
 set(ALICE_CYCLE_TOUCH_PIN 4 CACHE STRING "GPIO connected to the cycle touch sensor")
 
 target_compile_definitions(AliceLamp PRIVATE
     ALICE_LED_COUNT=${ALICE_LED_COUNT}
+    ALICE_LED_CLEAR_COUNT=${ALICE_LED_CLEAR_COUNT}
     ALICE_LED_PIN=${ALICE_LED_PIN}
     ALICE_POWER_TOUCH_PIN=${ALICE_POWER_TOUCH_PIN}
     ALICE_CYCLE_TOUCH_PIN=${ALICE_CYCLE_TOUCH_PIN})

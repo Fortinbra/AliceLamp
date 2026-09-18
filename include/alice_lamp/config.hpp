@@ -3,7 +3,11 @@
 #include <cstdint>
 
 #ifndef ALICE_LED_COUNT
-#define ALICE_LED_COUNT 60
+#define ALICE_LED_COUNT 80
+#endif
+
+#ifndef ALICE_LED_CLEAR_COUNT
+#define ALICE_LED_CLEAR_COUNT 300
 #endif
 
 #ifndef ALICE_LED_PIN
@@ -21,6 +25,7 @@
 namespace alice_lamp::config {
 
 inline constexpr std::uint32_t led_count = ALICE_LED_COUNT;
+inline constexpr std::uint32_t led_clear_count = ALICE_LED_CLEAR_COUNT;
 inline constexpr std::uint32_t led_pin = ALICE_LED_PIN;
 inline constexpr std::uint32_t power_touch_pin = ALICE_POWER_TOUCH_PIN;
 inline constexpr std::uint32_t cycle_touch_pin = ALICE_CYCLE_TOUCH_PIN;
@@ -31,6 +36,8 @@ inline constexpr std::uint32_t debounce_ms = 35;
 inline constexpr float rotation_per_frame = 0.0025F;
 
 static_assert(led_count > 0, "ALICE_LED_COUNT must be greater than zero");
+static_assert(led_clear_count >= led_count,
+              "ALICE_LED_CLEAR_COUNT must be at least ALICE_LED_COUNT");
 static_assert(led_pin != power_touch_pin && led_pin != cycle_touch_pin &&
                   power_touch_pin != cycle_touch_pin,
               "LED and touch inputs must use different GPIO pins");

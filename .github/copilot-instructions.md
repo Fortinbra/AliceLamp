@@ -26,6 +26,9 @@
   format. Increment MINOR for backward-compatible features and animations;
   increment MAJOR for incompatible hardware, configuration, or behavior changes.
 - Tag releases as `vMAJOR.MINOR`, exactly matching `VERSION`.
+- Document proposed features under `docs/features` and link them from
+  `docs/README.md`. Keep proposals separate from descriptions of implemented
+  behavior.
 - Keep changes focused and avoid modifying generated files under `build`.
 
 ## Version Control

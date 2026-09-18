@@ -42,7 +42,8 @@ The defaults are:
 
 | Setting | Default |
 | --- | ---: |
-| LED count | 60 |
+| Active LED count | 80 |
+| Startup clear limit | 300 |
 | WS2812B data | GPIO 2 |
 | Power touch output | GPIO 3 |
 | Cycle touch output | GPIO 4 |
@@ -54,8 +55,13 @@ Change these values in the CMake extension settings or reconfigure from a shell:
 
 ```powershell
 cmake -S . -B build -DALICE_LED_COUNT=72 -DALICE_LED_PIN=2 `
-    -DALICE_POWER_TOUCH_PIN=3 -DALICE_CYCLE_TOUCH_PIN=4
+    -DALICE_LED_CLEAR_COUNT=300 -DALICE_POWER_TOUCH_PIN=3 `
+    -DALICE_CYCLE_TOUCH_PIN=4
 ```
+
+`ALICE_LED_CLEAR_COUNT` must be at least the active LED count. At startup and when
+turning the lamp off, the firmware sends black through this many positions so LEDs
+from a previously larger configuration do not retain their last latched color.
 
 The maximum global brightness is `brightness` in
 `include/alice_lamp/config.hpp`. A gamma-2.0 correction is applied before this
@@ -69,3 +75,9 @@ The current version is stored in `VERSION` using a two-part `MAJOR.MINOR` format
 Increment MINOR when adding backward-compatible features or animations, and MAJOR
 for incompatible hardware, configuration, or behavior changes. Release tags must
 match the file with a `v` prefix, such as `v0.1`.
+
+## Proposed Features
+
+Future feature designs are tracked in [docs](docs/README.md), beginning with
+[Wi-Fi time synchronization](docs/features/wifi-time-sync.md) for an accurate
+pocket-watch display.
