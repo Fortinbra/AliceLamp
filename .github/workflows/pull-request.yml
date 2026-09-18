@@ -1,0 +1,92 @@
+name: PR validation
+
+on:
+  pull_request:
+    branches: [main]
+  merge_group:
+
+permissions:
+  contents: read
+
+jobs:
+  version:
+    name: Validate unreleased version
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out AliceLamp
+        uses: actions/checkout@v4
+
+      - name: Reject released version
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="$(tr -d '\r\n' < VERSION)"
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+$ ]]; then
+            echo "VERSION must contain a MAJOR.MINOR version" >&2
+            exit 1
+          fi
+
+          if gh release view "v$version" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            echo "VERSION $version has already been released; increment VERSION before merging." >&2
+            exit 1
+          fi
+
+  build:
+    name: Build ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Raspberry Pi Pico 2
+            board: pico2
+          - name: Pimoroni Pico Plus 2
+            board: pimoroni_pico_plus2_rp2350
+          - name: Pimoroni PGA2350
+            board: pimoroni_pga2350
+
+    steps:
+      - name: Check out AliceLamp
+        uses: actions/checkout@v4
+
+      - name: Check out Pico SDK
+        uses: actions/checkout@v4
+        with:
+          repository: raspberrypi/pico-sdk
+          ref: 2.3.1
+          path: pico-sdk
+          submodules: recursive
+
+      - name: Install Arm toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes cmake gcc-arm-none-eabi libnewlib-arm-none-eabi ninja-build
+
+      - name: Configure
+        run: >-
+          cmake -S . -B build -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          -DPICO_SDK_PATH=${{ github.workspace }}/pico-sdk
+          -DPICO_BOARD=${{ matrix.board }}
+          -DALICE_WARNINGS_AS_ERRORS=ON
+
+      - name: Build without warnings
+        run: cmake --build build
+
+  required:
+    name: PR validation
+    if: always()
+    needs: [version, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every validation job
+        env:
+          VERSION_RESULT: ${{ needs.version.result }}
+          BUILD_RESULT: ${{ needs.build.result }}
+        run: |
+          if [[ "$VERSION_RESULT" != "success" || "$BUILD_RESULT" != "success" ]]; then
+            echo "Version check: $VERSION_RESULT" >&2
+            echo "Board builds: $BUILD_RESULT" >&2
+            exit 1
+          fi

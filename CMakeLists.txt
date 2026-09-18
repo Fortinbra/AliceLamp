@@ -81,5 +81,11 @@ target_compile_options(AliceLamp PRIVATE
     $<$<COMPILE_LANGUAGE:CXX>:-Wall>
     $<$<COMPILE_LANGUAGE:CXX>:-Wextra>)
 
+option(ALICE_WARNINGS_AS_ERRORS "Treat AliceLamp compiler warnings as errors" OFF)
+if(ALICE_WARNINGS_AS_ERRORS)
+    target_compile_options(AliceLamp PRIVATE
+        $<$<COMPILE_LANGUAGE:CXX>:-Werror>)
+endif()
+
 pico_add_extra_outputs(AliceLamp)
 
