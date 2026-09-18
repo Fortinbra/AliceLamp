@@ -28,6 +28,15 @@
 - Tag releases as `vMAJOR.MINOR`, exactly matching `VERSION`.
 - Keep changes focused and avoid modifying generated files under `build`.
 
+## Version Control
+
+- Always make commit subjects memorable with an Alice in Wonderland reference
+  that is directly relevant to the change.
+- Keep the technical meaning clear and use a conventional commit prefix when it
+  fits, such as `feat: light the way down the rabbit hole`.
+- Prefer clarity over a forced reference, and do not reuse the same phrase for
+  unrelated changes.
+
 ## Validation
 
 - Build every firmware change with the `Compile Project` task (Ninja in `build`).
